@@ -1,11 +1,13 @@
 package ifnmg.edu.aplicativodpdm;
 
 import android.content.ContentValues;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 
 import com.google.android.material.snackbar.Snackbar;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.util.Log;
@@ -31,6 +33,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AdapterView;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private TarefaAdapter tarefaAdapter;
     private List<Tarefa> listaTarefas = new ArrayList<>();
-
+    private Tarefa tarefaSelecionada;
     private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
 
@@ -67,14 +70,58 @@ public class MainActivity extends AppCompatActivity {
                         new RecyclerItemClickListener.OnItemClickListener() {
                             @Override
                             public void onItemClick(View view, int position) {
-                                Log.i("clique", "onItemClick");
+
+                                //Recuperar a tarefa para edição
+                                Tarefa tarefaSelecionada = listaTarefas.get(position);
+
+                                //enviar a tarefa para a tela adicionar tarefa
+                                Intent intent = new Intent(MainActivity.this,AdicionarTarefas.class);
+                                intent.putExtra("tarefaSelecionada",tarefaSelecionada);
+
+                                startActivity(intent);
 
                             }
 
                             @Override
                             public void onLongItemClick(View view, int position) {
-                                Log.i("clique", "onLongItemClick");
+                                //recuperar a tarefa para excluir
+                                tarefaSelecionada = listaTarefas.get(position);
+
+                                AlertDialog.Builder dialog = new AlertDialog.Builder(MainActivity.this);
+
+                                //configuração do título e da mensagem do alert
+                                dialog.setTitle("CONFIRMAR EXCLUSÃO");
+                                dialog.setMessage("Deseja excluir a tarefa: " + tarefaSelecionada.getNomeTarefa() + " ?");
+
+                                dialog.setPositiveButton("Sim", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialogInterface, int i) {
+
+                                        TarefaDAO tarefaDAO = new TarefaDAO(getApplicationContext());
+                                        if(tarefaDAO.deletar(tarefaSelecionada)){
+                                            carregarListadeTarefas();
+                                            Toast.makeText(getApplicationContext(),
+                                                    "Tarefa Excluída",
+                                                    Toast.LENGTH_SHORT).show();
+
+                                        }else{
+                                            Toast.makeText(getApplicationContext(),
+                                                    "Erro ao excluir a tarefa",
+                                                    Toast.LENGTH_SHORT).show();
+                                        }
+
+
+                                    }
+                                });
+
+                                dialog.setNegativeButton("Não", null);
+
+                                //exibir a dialog
+                                dialog.create();
+                                dialog.show();
+
                             }
+
 
                             @Override
                             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
